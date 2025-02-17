@@ -1138,3 +1138,199 @@
     DataSet pubsDataSet = new DataSet("Pubs");
 ```
 В данном примере создается объект класса DataSet.
+
+**36. Класс DataAdapter.**
+
+*   **`DataAdapter`:**  Ключевой компонент ADO.NET, обеспечивающий взаимодействие между отсоединенным `DataSet` и источником данных (базой данных).  Действует как мост, заполняя `DataSet` данными и отправляя изменения обратно в БД.
+*   **Основные свойства:**
+    *   `SelectCommand`:  Команда (объект `Command`), выполняемая для *извлечения* данных из БД.  Обычно это SQL-запрос `SELECT`.
+    *   `InsertCommand`:  Команда, выполняемая для *добавления* новых записей в БД.
+    *   `UpdateCommand`:  Команда, выполняемая для *изменения* существующих записей в БД.
+    *   `DeleteCommand`:  Команда, выполняемая для *удаления* записей из БД.
+*   **Основные методы:**
+    *   `Fill(DataSet dataSet)`:  Заполняет `DataSet` данными, полученными в результате выполнения `SelectCommand`.
+    *   `Update(DataSet dataSet)`:  Отправляет изменения, сделанные в `DataSet`, в БД, используя `InsertCommand`, `UpdateCommand` и `DeleteCommand`.
+* **Пример:**
+
+```csharp
+// Предполагается, что connection - объект SqlConnection, уже настроенный
+SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM Customers", connection);
+
+// Заполнение DataSet
+DataSet dataSet = new DataSet();
+adapter.Fill(dataSet, "Customers"); // "Customers" - имя таблицы в DataSet
+
+// ... работа с данными в dataSet ...
+
+// Сохранение изменений (нужно предварительно настроить InsertCommand, UpdateCommand, DeleteCommand)
+adapter.Update(dataSet, "Customers");
+
+```
+
+*   **`CommandBuilder`:**  Вспомогательный класс, который может *автоматически* генерировать `InsertCommand`, `UpdateCommand` и `DeleteCommand` на основе `SelectCommand`, если запрос выбирает данные из *одной* таблицы и в ней есть первичный ключ.  Пример:
+   ```csharp
+    SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM Customers", connection);
+    SqlCommandBuilder builder = new SqlCommandBuilder(adapter); //связь с адаптером
+
+    // Теперь команды Insert, Update, Delete будут сгенерированы автоматически
+    // adapter.Update(...);
+   ```
+
+**37. Технология LINQ to SQL.**
+
+*   **LINQ to SQL:**  Технология, позволяющая работать с реляционными базами данных (Microsoft SQL Server) с использованием LINQ (Language Integrated Query) запросов непосредственно в коде C#.
+*   **Преимущества:**
+    *   **Объектно-ориентированный подход:**  База данных представляется в виде набора классов (классов сущностей), а таблицы – как коллекции объектов этих классов.
+    *   **Строгая типизация:**  Проверка запросов на этапе компиляции.
+    *   **Упрощение доступа к данным:**  Не нужно писать SQL-запросы вручную (в большинстве случаев).
+    *   **Интеграция с Visual Studio:**  Поддержка дизайнера классов, автогенерация кода.
+
+*   **Основные компоненты:**
+    *   **Классы сущностей (Entity Classes):**  Классы, представляющие таблицы БД.  Свойства классов соответствуют столбцам таблиц.  Обычно генерируются автоматически.
+        * Атрибут `[Table]` связывает класс с таблицей.
+        * Атрибут `[Column]` связывает свойство класса со столбцом таблицы.
+    *   **`DataContext`:**  Основной класс для взаимодействия с БД.
+        *   Предоставляет доступ к таблицам (через свойства типа `Table<TEntity>`).
+        *   Отслеживает изменения объектов.
+        *   Выполняет запросы LINQ to SQL.
+        *   Сохраняет изменения в БД (`SubmitChanges()`).
+
+*   **Пример:**
+
+    ```csharp
+    // Определение класса сущности (обычно генерируется автоматически)
+    [Table(Name = "Customers")]
+    public class Customer
+    {
+        [Column(IsPrimaryKey = true)]
+        public string CustomerID { get; set; }
+
+        [Column]
+        public string CompanyName { get; set; }
+        // ... другие свойства ...
+    }
+    //Использование
+     string connectionString = "..."; // Строка подключения
+        DataContext dbContext = new DataContext(connectionString);
+
+        // Получение таблицы Customers
+        Table<Customer> customers = dbContext.GetTable<Customer>();
+
+        // LINQ-запрос
+        var query = from c in customers
+                    where c.City == "London"
+                    select c;
+
+        foreach (Customer cust in query)
+        {
+            Console.WriteLine(cust.CustomerID + ", " + cust.CompanyName);
+        }
+
+    // Добавление новой записи
+        Customer newCustomer = new Customer();
+        newCustomer.CustomerID = "NEWID";
+        newCustomer.CompanyName = "New Company";
+        customers.InsertOnSubmit(newCustomer);
+        dbContext.SubmitChanges();
+    ```
+
+**38. Технология Entity Framework**
+В предоставленных файлах нет подробного описания Entity Framework. Есть только упоминание в контексте способов работы с данными:
+*С использованием технологии LINQ
+* LINQ to DataSet
+* LINQ to SQL
+* **Entity Framework**
+Поэтому, основываясь только на этой информации, я могу сказать следующее:
+
+*   **Entity Framework:**  Еще одна технология из семейства ADO.NET, предоставляющая более высокий уровень абстракции по сравнению с "чистым" ADO.NET и даже LINQ to SQL. Она упомянута как альтернатива LINQ to SQL.
+
+**39. Разработка многопоточных приложений в С#. Основы потоков в C#**
+
+*   **Поток (Thread):**  Независимый путь выполнения кода в рамках процесса.
+*   **Процесс (Process):**  Экземпляр выполняющейся программы.  Имеет собственное адресное пространство.
+*   **Многопоточность (Multithreading):**  Выполнение нескольких потоков в рамках одного процесса.  Потоки разделяют общую память процесса.
+*   **Преимущества многопоточности:**
+    *   Повышение отзывчивости приложения (UI не "зависает" при выполнении длительных операций).
+    *   Более эффективное использование многопроцессорных систем.
+    *   Улучшение структуры программы (разделение задач по потокам).
+*   **Основные классы:**
+    *   **`System.Threading.Thread`:**  Представляет поток.
+    * **`System.Threading.ThreadStart`:** Делегат для метода, выполняемого в потоке(без параметров).
+    * **`System.Threading.ParameterizedThreadStart`**: Делегат для метода, выполняемого в потоке(с параметрами).
+*   **Создание потока:**
+    1.  Определить метод, который будет выполняться в потоке.
+    2.  Создать делегат `ThreadStart` (или `ParameterizedThreadStart`), указывающий на этот метод.
+    3.  Создать объект `Thread`, передав делегат в конструктор.
+    4.  Запустить поток методом `Start()`.
+
+*   **Пример:**
+
+    ```csharp
+    using System.Threading;
+
+    public class MyClass
+    {
+        public static void MyThreadMethod()
+        {
+            Console.WriteLine("Thread is running...");
+        }
+        public static void Main()
+        {
+          ThreadStart myThreadDelegate = new ThreadStart(MyThreadMethod);
+          Thread myThread = new Thread(myThreadDelegate);
+          myThread.Start();
+        }
+    }
+    ```
+
+**40. Методы управления потоками в C#. Свойства и приоритеты потоков. Передача данных в поток.** (Продолжение и дополнение)
+
+*   **Методы управления потоками (класс `Thread`):** (Продолжение)
+    *`Resume()` - *Устаревший*, не рекомендуется использовать.
+    * `Suspend()` - *Устаревший*, не рекомендуется использовать.
+
+*   **Свойства потока (класс `Thread`):**
+    *   `Name`: Имя потока (для отладки).
+    *   `IsAlive`: `true`, если поток запущен (и еще не завершен).
+    *   `ThreadState`: Состояние потока (перечисление `ThreadState`).
+    *   `Priority`: Приоритет потока (перечисление `ThreadPriority`: `Lowest`, `BelowNormal`, `Normal`, `AboveNormal`, `Highest`).  Влияет на планирование потоков операционной системой.
+    *  `IsBackground` - возвращает или задает логическое значение. Если true, то поток фоновый.
+
+*   **Приоритеты потоков:**
+    *   Операционная система планирует выполнение потоков с учетом их приоритета.
+    *   Потоки с более высоким приоритетом получают больше процессорного времени.
+    *   Не следует злоупотреблять высокими приоритетами, т.к. это может привести к "голоданию" других потоков.
+
+*   **Передача данных в поток:**
+    *   **Через параметры конструктора `Thread`:**
+        *   Использовать делегат `ParameterizedThreadStart`, который принимает параметр типа `object`.
+        ```csharp
+        public void MyMethod(object data)
+        {
+             // ... используем data ...
+         }
+        Thread t = new Thread(new ParameterizedThreadStart(MyMethod));
+        t.Start("My Data"); // Передаем строку
+        ```
+
+    *   **Через поля класса:**  Если метод, выполняемый в потоке, является членом класса, он может обращаться к полям этого класса.
+        *Пример из файлов:*
+        ```csharp
+        public void MyMethod()
+        {
+          // ... используем this.someField ...
+        }
+
+        Thread t = new Thread(MyMethod);
+
+        ```
+    *   **Через замыкания (closures):**  Лямбда-выражения и анонимные методы могут "захватывать" переменные из внешней области видимости.
+
+        ```csharp
+        int x = 10;
+        Thread t = new Thread(() =>
+        {
+          Console.WriteLine(x); // x "захвачена" из внешней области
+        });
+        t.Start();
+        ```
